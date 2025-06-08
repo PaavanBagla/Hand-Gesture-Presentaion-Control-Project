@@ -14,4 +14,4 @@ pip3 install mediapipe opencv-python pyautogui
 
 # Acknowledgements
 This project is based on [kinivi/hand-gesture-recognition-mediapipe](https://github.com/kinivi/hand-gesture-recognition-mediapipe), which provides the core hand tracking and gesture classification logic using MediaPipe.
-We have customized and extended this project for real-time presentation control with additional gesture features.
+I have customized and extended this project for real-time presentation control with additional gesture features.
