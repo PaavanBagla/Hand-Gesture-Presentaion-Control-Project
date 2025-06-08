@@ -6,10 +6,9 @@ Control the Google Presentation slides with Hand Gesture
 ```bash
 conda create -n hand_gesture_env python=3.9 -y
 conda activate hand_gesture_env
-
+```
 **Step 2: Install Dependencies**
 ```bash
 pip3 install mediapipe opencv-python pyautogui
-
-
+```
 
