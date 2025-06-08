@@ -1,4 +1,4 @@
-###### What does thsi script does:
+###### What does this script does:
     # Access the webcam
     # Use MediaPipe Hands to detect a hand
     # Draw hand landmarks on the video feed
@@ -6,7 +6,10 @@
 
 import cv2 # → OpenCV for webcam access and display
 import mediapipe as mp # → MediaPipe for hand detection and landmarks
-import time # → Time for FPS calculation
+import pyautogui
+import numpy as np
+
+pyautogui.FAILSAFE = False  # Disable fail-safe for smooth control
 
 # Initialize MediaPipe Hands
 mp_hands = mp.solutions.hands
@@ -15,10 +18,11 @@ mp_drawing = mp.solutions.drawing_utils
 # Initialize webcam
 cap = cv2.VideoCapture(1)
 
+screen_w, screen_h = pyautogui.size()
+finger_tips_ids = [4, 8, 12, 16, 20]  # Thumb, Index, Middle, Ring, Pinky
+
 # Configure Mediapipe Hands
 with mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7) as hands:
-    prev_time = 0  # Initialize previous time for FPS calculation
-
     while cap.isOpened(): # Loop while webcam is open
         success, frame = cap.read()
         if not success:
@@ -33,19 +37,60 @@ with mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7) as hands:
 
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                # Draw hand landmarks on the frame
+                # Get all landmarks positions
+                lm_list = []
+                h, w, _ = frame.shape
+                for id, lm in enumerate(hand_landmarks.landmark):
+                    lm_list.append((id, int(lm.x * w), int(lm.y * h)))
+                
+                fingers = []
+                # Thumb (check x difference for left/right)
+                if lm_list[4][1] > lm_list[3][1]:
+                    fingers.append(1)
+                else:
+                    fingers.append(0)
+                
+                # Other 4 fingers (check y)
+                for tip_id in [8, 12, 16, 20]:
+                    if lm_list[tip_id][2] < lm_list[tip_id - 2][2]:
+                        fingers.append(1)
+                    else:
+                        fingers.append(0)
+
+                # print(f"Fingers up: {fingers}")  # e.g., [1, 1, 0, 0, 0] => thumb and index up
+
+                # Control mouse only if index finger is up
+                if fingers == [0,1,0,0,0]:  # Only index finger up
+                    x, y = lm_list[8][1], lm_list[8][2] # Index Tip Coords
+
+                    # Convert to screen coordinates
+                    screen_x = np.interp(x, [0, w], [0, screen_w])
+                    screen_y = np.interp(y, [0, h], [0, screen_h])
+
+                    pyautogui.moveTo(screen_x, screen_y)
+
+                # Next slide: index + middle fingers up
+                elif fingers == [0, 1, 1, 0, 0]:
+                    pyautogui.press('right')
+
+                # Left click: fist (no fingers)
+                elif fingers == [0, 0, 0, 0, 0]:
+                    pyautogui.click()
+
+                # Zoom in: thumb + index
+                elif fingers == [1, 1, 0, 0, 0]:
+                    pyautogui.hotkey('ctrl', '+')
+
+                # Zoom out: thumb + pinky
+                elif fingers == [1, 0, 0, 0, 1]:
+                    pyautogui.hotkey('ctrl', '-')
+
+                # Draw landmarks and connections
                 mp_drawing.draw_landmarks(
                     frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-        # Show FPS
-        curr_time = time.time()
-        fps = 1 / (curr_time - prev_time) if prev_time else 0
-        prev_time = curr_time
-        cv2.putText(frame, f'FPS: {int(fps)}', (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
         # Display the output
-        cv2.imshow('Hand Detection', frame)
+        cv2.imshow('Gesture Control', frame)
 
         # Exit with 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
