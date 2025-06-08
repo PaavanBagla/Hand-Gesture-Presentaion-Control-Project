@@ -1,4 +1,4 @@
-# Hand-Gesture-Presentaion-Control-Project
+# Hand Gesture Controller for Presentations
 Control the Google Presentation slides with Hand Gesture
 
 # Installation
