@@ -15,9 +15,9 @@ pip3 install mediapipe opencv-python pyautogui
 # Goal
 Control Google Slides via:
 
-👉 1-finger swipe right → Next Slide
+👉 3-fingers swipe right → Next Slide
 
-👈 1-finger swipe left → Previous Slide
+👈 3-fingers swipe left → Previous Slide
 
 🫵 Index finger Point → Spotlight pointer
 
