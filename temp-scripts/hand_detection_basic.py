@@ -70,8 +70,12 @@ with mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7) as hands:
                     pyautogui.moveTo(screen_x, screen_y)
 
                 # Next slide: index + middle fingers up
-                elif fingers == [0, 1, 1, 0, 0]:
+                elif fingers == [1, 1, 1, 0, 0]:
                     pyautogui.press('right')
+
+                # Prev slide: index + middle fingers up
+                elif fingers == [1, 1, 1, 1, 0]:
+                    pyautogui.press('left')
 
                 # Left click: fist (no fingers)
                 elif fingers == [0, 0, 0, 0, 0]:
