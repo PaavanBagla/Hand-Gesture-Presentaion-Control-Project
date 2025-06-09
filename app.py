@@ -35,19 +35,31 @@ class PresentationController:
         self.prev_gesture = None
         self.gesture_start_time = 0
         self.gesture_hold_threshold = 0.5  # seconds
+        self.swipe_state = "idle"
+        self.last_swipe_time = 0
+        self.swipe_cooldown = 0.7 # seconds between allowed swipes
     
     def handle_gestures(self, hand_sign_id, fingure_gesture_id, landmark_list, point_history):
         current_time = time.time()
 
-        # 3-finger swipe detection
+        # 3-finger swipe detection ###############################################################
         if hand_sign_id == THREE_FINGER_ID:
             if len(point_history) >= 2:
-                direction = detect_swipe(point_history)
-                if direction == "left":
-                    pyautogui.hotkey("right") # Next slide
-                elif direction == "right":
-                    pyautogui.hotkey("left") # Previous slide
-        
+                # Only detect new swipes if cooldown has passed and we're not already swiping
+                if current_time - self.last_swipe_time > self.swipe_cooldown and self.swipe_state != "swiping":
+                    direction = detect_swipe(point_history)
+                    if direction:
+                        self.swipe_state = "swiping"
+                        self.last_swipe_direction = direction
+                
+                # Detect when swipe ends (finger stops moving significantly)
+                if self.swipe_state == "swiping" and self._swipe_ended(point_history):
+                    self._execute_swipe_action(self.last_swipe_direction)
+                    self.swipe_state = "idle"
+                    self.last_swipe_time = current_time
+        else:
+            self.swipe_state = "idle"  # Reset if not in swipe gesture
+    
         # # Pointing Gesture (Spotlight)
         # elif hand_sign_id == POINTING_ID:
         #     index_tip = landmark_list[8] # Index finger tip
@@ -75,6 +87,31 @@ class PresentationController:
         # else:
         #     self.spotlight.hide()
         #     self.pan_handler.reset()
+    
+    def _swipe_ended(self, point_history):
+        """Check if finger movement has stopped below threshold"""
+        if len(point_history) < 3:
+            return False
+        
+        # Get last few points (excluding zeros)
+        recent_points = [p for p in list(point_history)[-3:] if p != [0, 0]]
+        if len(recent_points) < 2:
+            return False
+            
+        # Calculate recent movement
+        total_movement = sum(
+            abs(recent_points[i+1][0] - recent_points[i][0]) 
+            for i in range(len(recent_points)-1)
+        )
+        return total_movement < 3  # Pixels threshold for "stopped moving"
+
+    def _execute_swipe_action(self, direction):
+        """Execute slide change with debounce checking"""
+        if direction == "left":
+            pyautogui.hotkey('right')  # Next slide
+        elif direction == "right":
+            pyautogui.hotkey('left')   # Previous slide
+        print(f"Slide changed: {direction}")  # Debug output
 #*************************************************************************************************************#
 
 def get_args():
@@ -121,7 +158,7 @@ def main():
     mp_hands = mp.solutions.hands
     hands = mp_hands.Hands(
         static_image_mode=use_static_image_mode,
-        max_num_hands=2,
+        max_num_hands=1,
         min_detection_confidence=min_detection_confidence,
         min_tracking_confidence=min_tracking_confidence,
     )
@@ -227,7 +264,7 @@ def main():
                     point_history
                 )
                 #*************************************************************************************************************#
-                
+
                 # Calculates the gesture IDs in the latest detection
                 finger_gesture_history.append(finger_gesture_id)
                 most_common_fg_id = Counter(
