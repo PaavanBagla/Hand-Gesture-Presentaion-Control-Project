@@ -25,7 +25,7 @@ Control Google Slides via:
 
 🤏 Pinch In (Index+Middle+Thumb) → Zoom out
 
-✌️ Two-finger drag - Pan Screen
+✌️ Two-finger drag → Pan Screen
 
 # Acknowledgements
 This project is based on [kinivi/hand-gesture-recognition-mediapipe](https://github.com/kinivi/hand-gesture-recognition-mediapipe), which provides the core hand tracking and gesture classification logic using MediaPipe.
