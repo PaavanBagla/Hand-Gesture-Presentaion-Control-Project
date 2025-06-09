@@ -12,7 +12,7 @@ conda activate hand_gesture_env
 pip3 install mediapipe opencv-python pyautogui
 ```
 
-# Goal
+# 🚀 Goal
 Control Google Slides via:
 
 👉 1-finger swipe right → Next Slide
