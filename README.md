@@ -15,17 +15,17 @@ pip3 install mediapipe opencv-python pyautogui
 # Goal
 Control Google Slides via:
 
-👉 Three fingers or 1 finger (whichever is better) swipe left → Next Slide
+👉 1-finger swipe right → Next Slide
 
-👈 Three fingers or 1 finger (whichever is better) swipe right  → Previous Slide
+👈 1-finger swipe left → Previous Slide
 
-🫵 Index finger Point →  should Spot light the the pointed area on the slide 
+🫵 Index finger Point → Spotlight pointer
 
-🤏 Index Finger + Middle Finger + Thumb pinch out → Zoom in 
+🤏 Pinch Out (Index+Middle+Thumb) → Zoom in 
 
-🤏 Index Finger + Middle Finger + Thumb pinch in → Zoom out
+🤏 Pinch In (Index+Middle+Thumb) → Zoom out
 
-✌️ Index Finger + Middle finger movement should behave like i HAVE TOUCH SCREEN CONTROL to move (if zoomed in)
+✌️ Two-finger drag - Pan Screen
 
 # Acknowledgements
 This project is based on [kinivi/hand-gesture-recognition-mediapipe](https://github.com/kinivi/hand-gesture-recognition-mediapipe), which provides the core hand tracking and gesture classification logic using MediaPipe.
