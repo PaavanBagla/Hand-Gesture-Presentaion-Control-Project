@@ -17,20 +17,20 @@ from model import KeyPointClassifier
 from model import PointHistoryClassifier
 from scripts.swipe_control import detect_swipe # For Swipe features
 # from scripts.zoom_control import detect_pinch # For Zoom features
-# from scripts.pointer_control import SpotlightPointer # For Spotlight features
+from scripts.pointer_control import SpotlightPointer # For Spotlight features
 # from scripts.pan_control import PanHandler # For Pan features
 
 #*************************************************************************************************************#
 # Constants
 THREE_FINGER_ID = 4  # Custom gesture ID for 3-finger hand sign
-# POINTING_ID = 5       # Existing point gesture ID
+POINTING_ID = 2       # Existing point gesture ID
 # PINCH_IN_ID = 6      # Custom gesture ID for pinch in
 # PINCH_OUT_ID = 7     # Custom gesture ID for pinch out
 # TWO_FINGER_ID = 8     # Custom gesture ID for two-finger gesture
 
 class PresentationController:
     def __init__(self):
-        # self.spotlight = SpotlightPointer()
+        self.spotlight = SpotlightPointer()
         # self.pan_handler = PanHandler()
         self.prev_gesture = None
         self.gesture_start_time = 0
@@ -57,13 +57,11 @@ class PresentationController:
                     self._execute_swipe_action(self.last_swipe_direction)
                     self.swipe_state = "idle"
                     self.last_swipe_time = current_time
-        else:
-            self.swipe_state = "idle"  # Reset if not in swipe gesture
     
-        # # Pointing Gesture (Spotlight)
-        # elif hand_sign_id == POINTING_ID:
-        #     index_tip = landmark_list[8] # Index finger tip
-        #     self.spotlight.update_position(index_tip)
+        # Pointing Gesture (Spotlight)
+        if hand_sign_id == POINTING_ID:
+            index_tip = landmark_list[8] # Index finger tip
+            self.spotlight.update_position(index_tip)
 
         # # Pinch gestures (zoom)
         # elif hand_sign_id in [PINCH_IN_ID, PINCH_OUT_ID]:
@@ -84,9 +82,10 @@ class PresentationController:
         #     self.pan_handler.update_fingers((index_tip, middle_tip))
         
         # # Reset if no gesture detected
-        # else:
-        #     self.spotlight.hide()
-        #     self.pan_handler.reset()
+        else:
+            # self.swipe_state = "idle"  # Reset if not in swipe gesture
+            self.spotlight.hide()
+            # self.pan_handler.reset()
     
     def _swipe_ended(self, point_history):
         """Check if finger movement has stopped below threshold"""
@@ -108,10 +107,11 @@ class PresentationController:
     def _execute_swipe_action(self, direction):
         """Execute slide change with debounce checking"""
         if direction == "left":
-            pyautogui.hotkey('right')  # Next slide
+            pyautogui.press('right')  # Next slide
         elif direction == "right":
-            pyautogui.hotkey('left')   # Previous slide
+            pyautogui.press('left')   # Previous slide
         print(f"Slide changed: {direction}")  # Debug output
+        
 #*************************************************************************************************************#
 
 def get_args():
@@ -245,7 +245,7 @@ def main():
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 
                 # Track index finger for pointing/swipe
-                if hand_sign_id in [THREE_FINGER_ID]:
+                if hand_sign_id in [POINTING_ID, THREE_FINGER_ID]:
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
