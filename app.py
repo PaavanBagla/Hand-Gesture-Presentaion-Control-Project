@@ -16,28 +16,37 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 from scripts.swipe_control import detect_swipe # For Swipe features
-# from scripts.zoom_control import detect_pinch # For Zoom features
-from scripts.pointer_control import SpotlightPointer # For Spotlight features
-# from scripts.pan_control import PanHandler # For Pan features
+from scripts.zoom_control import ZoomController # For Zoom features
+from scripts.spotlight_control import SpotlightController # For Spotlight features
+from scripts.move_control import MoveController # For move features
 
 #*************************************************************************************************************#
 # Constants
-THREE_FINGER_ID = 4  # Custom gesture ID for 3-finger hand sign
-POINTING_ID = 2       # Existing point gesture ID
-# PINCH_IN_ID = 6      # Custom gesture ID for pinch in
-# PINCH_OUT_ID = 7     # Custom gesture ID for pinch out
-# TWO_FINGER_ID = 8     # Custom gesture ID for two-finger gesture
+THREE_FINGER_ID = 4  # Custom '3-finger' hand sign for swiping
+PINCH_IN_ID = 5 # Custom 'pinch in' hand sign for zooming in
+PINCH_OUT_ID = 6 # Custom 'pinch out' hand sign for zooming out
+TWO_FINGER_ID = 7 # Custom '2-finger' hand sign for moving
+POINTING_ID = 2  # Custom 'pointer' hand sign for spotlight
 
 class PresentationController:
-    def __init__(self):
-        self.spotlight = SpotlightPointer()
-        # self.pan_handler = PanHandler()
-        self.prev_gesture = None
-        self.gesture_start_time = 0
-        self.gesture_hold_threshold = 0.5  # seconds
+    def __init__(self, cam_width, cam_height):
         self.swipe_state = "idle"
         self.last_swipe_time = 0
         self.swipe_cooldown = 0.7 # seconds between allowed swipes
+        
+        self.zoom_controller = ZoomController()
+        self.move_controller = MoveController()
+
+        self.spotlight_controller = SpotlightController()
+        self.pointer_hold_counter = 0
+        self.pointer_hold_threshold = 15  # Number of consecutive frames required
+        self.cam_width = cam_width
+        self.cam_height = cam_height
+        self.x_min, self.x_max = 100, self.cam_width - 100
+        self.y_min, self.y_max = 100, self.cam_height - 100
+        self.prev_spotlight_pos = None
+        self.smoothing_factor = 0.2  # 0 = no smoothing, 1 = no movement
+
     
     def handle_gestures(self, hand_sign_id, fingure_gesture_id, landmark_list, point_history):
         current_time = time.time()
@@ -59,34 +68,79 @@ class PresentationController:
                     self.last_swipe_time = current_time
     
         # Pointing Gesture (Spotlight)
-        if hand_sign_id == POINTING_ID:
-            index_tip = landmark_list[8] # Index finger tip
-            self.spotlight.update_position(index_tip)
 
-        # # Pinch gestures (zoom)
-        # elif hand_sign_id in [PINCH_IN_ID, PINCH_OUT_ID]:
-        #     thumb_tip = landmark_list[4]
-        #     index_tip = landmark_list[8]
-        #     middle_tip = landmark_list[12]
-        #     zoom_factor = detect_pinch(thumb_tip, index_tip, middle_tip)
-            
-        #     if hand_sign_id == PINCH_IN_ID and zoom_factor < 0.8:
-        #         pyautogui.hotkey('ctrl', '+')  # Zoom in
-        #     elif hand_sign_id == PINCH_OUT_ID and zoom_factor > 1.2:
-        #         pyautogui.hotkey('ctrl', '-')  # Zoom out
+        # Pinch gestures (zoom)
+        if hand_sign_id == PINCH_OUT_ID:
+            self.zoom_controller.zoom("in")
+        elif hand_sign_id == PINCH_IN_ID:
+            self.zoom_controller.zoom("out")
+
+        # Two-finger drag for moving zoomed screen
+        if hand_sign_id == TWO_FINGER_ID:
+            self.move_controller.move_cursor(landmark_list[8])  # track index finger
         
-        # # Two-finger pan
-        # elif hand_sign_id == TWO_FINGER_ID:
-        #     index_tip = landmark_list[8]
-        #     middle_tip = landmark_list[12]
-        #     self.pan_handler.update_fingers((index_tip, middle_tip))
-        
-        # # Reset if no gesture detected
+        # Spotlight pointer
+        if hand_sign_id == POINTING_ID:
+            self.pointer_hold_counter += 1
+            if self.pointer_hold_counter >= self.pointer_hold_threshold:
+                index_finger = tuple(map(int, landmark_list[8]))
+                
+                # Update dynamic min/max observed
+                self.x_min = min(self.x_min, index_finger[0])
+                self.x_max = max(self.x_max, index_finger[0])
+                self.y_min = min(self.y_min, index_finger[1])
+                self.y_max = max(self.y_max, index_finger[1])
+                
+                # --- Clipping finger within known observed range to avoid overflows ---
+                cam_x = max(self.x_min, min(index_finger[0], self.x_max))
+                cam_y = max(self.y_min, min(index_finger[1], self.y_max))
+                clamped_finger = (cam_x, cam_y)
+                
+                # --- Map to screen coordinates ---
+                target_pos = self.dynamic_map_to_screen(clamped_finger)
+
+                # --- Smoothing logic ---
+                if not hasattr(self, 'prev_spotlight_pos'):
+                    self.prev_spotlight_pos = None
+                if not hasattr(self, 'smoothing_factor'):
+                    self.smoothing_factor = 0.2  # tweak to your liking
+
+                if self.prev_spotlight_pos is None:
+                    smoothed_pos = target_pos
+                else:
+                    smoothed_pos = (
+                        int(self.prev_spotlight_pos[0] * (1 - self.smoothing_factor) + target_pos[0] * self.smoothing_factor),
+                        int(self.prev_spotlight_pos[1] * (1 - self.smoothing_factor) + target_pos[1] * self.smoothing_factor)
+                    )
+                self.prev_spotlight_pos = smoothed_pos
+
+                print("Camera:", clamped_finger, "→ Screen:", smoothed_pos)
+                self.spotlight_controller.show_spotlight(smoothed_pos)
+
+        # Reset if no gesture detected
         else:
-            # self.swipe_state = "idle"  # Reset if not in swipe gesture
-            self.spotlight.hide()
-            # self.pan_handler.reset()
-    
+            self.swipe_state = "idle"  # Reset if not in swipe gesture
+            self.move_controller.reset()  # stop drag when gesture ends
+            self.pointer_hold_counter = 0
+            self.spotlight_controller.hide_spotlight()
+
+    def dynamic_map_to_screen(self, cam_pos):
+        cam_x, cam_y = cam_pos
+        screen_width, screen_height = pyautogui.size()
+
+        # Prevent division by zero
+        x_range = max(self.x_max - self.x_min, 1)
+        y_range = max(self.y_max - self.y_min, 1)
+
+        # Normalize cam_x to [0,1] based on visible range
+        norm_x = (cam_x - self.x_min) / x_range
+        norm_y = (cam_y - self.y_min) / y_range
+
+        screen_x = int(norm_x * screen_width)
+        screen_y = int(norm_y * screen_height)
+        return (screen_x, screen_y)
+
+
     def _swipe_ended(self, point_history):
         """Check if finger movement has stopped below threshold"""
         if len(point_history) < 3:
@@ -111,7 +165,13 @@ class PresentationController:
         elif direction == "right":
             pyautogui.press('left')   # Previous slide
         print(f"Slide changed: {direction}")  # Debug output
-        
+
+def map_camera_to_screen(cam_x, cam_y, cam_width, cam_height):
+    screen_width, screen_height = pyautogui.size()
+    screen_x = int(cam_x / cam_width * screen_width)
+    screen_y = int(cam_y / cam_height * screen_height)
+    return (screen_x, screen_y)
+
 #*************************************************************************************************************#
 
 def get_args():
@@ -151,8 +211,15 @@ def main():
 
     # Camera preparation ###############################################################
     cap = cv.VideoCapture(cap_device)
+    # Set preferred dimensions
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+
+    # Get the actual dimensions (camera may not honor the requested size exactly)
+    actual_cam_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
+    actual_cam_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    print("🎥 Camera dimensions (actual):", actual_cam_width, "x", actual_cam_height)
+
 
     # Model load #############################################################
     mp_hands = mp.solutions.hands
@@ -197,7 +264,7 @@ def main():
 
     #*************************************************************************************************************#
     # Add our controller
-    controller = PresentationController()
+    controller = PresentationController(actual_cam_width, actual_cam_height)
     #*************************************************************************************************************#
 
     while True:
@@ -244,8 +311,8 @@ def main():
                 # Classify hand sign
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 
-                # Track index finger for pointing/swipe
-                if hand_sign_id in [POINTING_ID, THREE_FINGER_ID]:
+                # Track index finger for swipe/move/spotlight gestures
+                if hand_sign_id in [THREE_FINGER_ID, TWO_FINGER_ID, POINTING_ID]:
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
