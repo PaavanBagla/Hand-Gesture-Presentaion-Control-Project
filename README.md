@@ -27,8 +27,8 @@ Control Google Slides via:
 
 ✌️ Two-finger drag → Pan Screen
 
-# Swipe Control Feature
-https://github.com/user-attachments/assets/09b2bd5c-1751-4e8c-b88b-0695ba848dcb
+# Swipe + Spotlight Control Feature
+[https://github.com/user-attachments/assets/09b2bd5c-1751-4e8c-b88b-0695ba848dcb](https://github.com/user-attachments/assets/1a6059ed-cb67-4274-8c47-b342bd67eabd)
 # Acknowledgements
 This project is based on [kinivi/hand-gesture-recognition-mediapipe](https://github.com/kinivi/hand-gesture-recognition-mediapipe), which provides the core hand tracking and gesture classification logic using MediaPipe.
 
