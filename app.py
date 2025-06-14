@@ -27,6 +27,7 @@ PINCH_IN_ID = 5 # Custom 'pinch in' hand sign for zooming in
 PINCH_OUT_ID = 6 # Custom 'pinch out' hand sign for zooming out
 TWO_FINGER_ID = 7 # Custom '2-finger' hand sign for moving
 POINTING_ID = 2  # Custom 'pointer' hand sign for spotlight
+OK_HAND_ID = 3 # Custom 'Ok' hand sign for spotlight
 
 class PresentationController:
     def __init__(self, cam_width, cam_height):
@@ -40,6 +41,7 @@ class PresentationController:
         self.spotlight_controller = SpotlightController()
         self.pointer_hold_counter = 0
         self.pointer_hold_threshold = 15  # Number of consecutive frames required
+        self.ok_hand_deactivate_threshold = 6
         self.cam_width = cam_width
         self.cam_height = cam_height
         self.x_min, self.x_max = 100, self.cam_width - 100
@@ -79,10 +81,12 @@ class PresentationController:
         if hand_sign_id == TWO_FINGER_ID:
             self.move_controller.move_cursor(landmark_list[8])  # track index finger
         
-        # Spotlight pointer
+        # Spotlight control logic
         if hand_sign_id == POINTING_ID:
-            self.pointer_hold_counter += 1
+            self.pointer_hold_counter = min(self.pointer_hold_counter + 1, self.pointer_hold_threshold)
             if self.pointer_hold_counter >= self.pointer_hold_threshold:
+                # Only take new screenshot if we're activating spotlight now
+                force_refresh = not self.spotlight_controller.enabled
                 index_finger = tuple(map(int, landmark_list[8]))
                 
                 # Update dynamic min/max observed
@@ -91,15 +95,15 @@ class PresentationController:
                 self.y_min = min(self.y_min, index_finger[1])
                 self.y_max = max(self.y_max, index_finger[1])
                 
-                # --- Clipping finger within known observed range to avoid overflows ---
+                # Clipping finger within known observed range
                 cam_x = max(self.x_min, min(index_finger[0], self.x_max))
                 cam_y = max(self.y_min, min(index_finger[1], self.y_max))
                 clamped_finger = (cam_x, cam_y)
                 
-                # --- Map to screen coordinates ---
+                # Map to screen coordinates
                 target_pos = self.dynamic_map_to_screen(clamped_finger)
 
-                # --- Smoothing logic ---
+                # Smoothing logic
                 if not hasattr(self, 'prev_spotlight_pos'):
                     self.prev_spotlight_pos = None
                 if not hasattr(self, 'smoothing_factor'):
@@ -114,15 +118,30 @@ class PresentationController:
                     )
                 self.prev_spotlight_pos = smoothed_pos
 
-                print("Camera:", clamped_finger, "→ Screen:", smoothed_pos)
-                self.spotlight_controller.show_spotlight(smoothed_pos)
+                self.spotlight_controller.show_spotlight(smoothed_pos, force_refresh)
 
-        # Reset if no gesture detected
+        # Only deactivate spotlight with OK hand gesture
+        elif hand_sign_id == OK_HAND_ID and self.spotlight_controller.enabled:
+            self.pointer_hold_counter = max(self.pointer_hold_counter - 1, -self.ok_hand_deactivate_threshold)
+            if self.pointer_hold_counter <= -self.ok_hand_deactivate_threshold:
+                self.spotlight_controller.hide_spotlight()
+                self.pointer_hold_counter = 0
+                self.prev_spotlight_pos = None
         else:
-            self.swipe_state = "idle"  # Reset if not in swipe gesture
-            self.move_controller.reset()  # stop drag when gesture ends
-            self.pointer_hold_counter = 0
-            self.spotlight_controller.hide_spotlight()
+            # For other gestures, slowly reset counter but keep spotlight active
+            if not self.spotlight_controller.enabled:
+                self.pointer_hold_counter = 0
+            elif abs(self.pointer_hold_counter) > 0:  # Slowly return to zero if not pointing/ok
+                self.pointer_hold_counter = int(self.pointer_hold_counter * 0.8)  # Decay factord:
+                self.pointer_hold_counter = 0
+
+        # Reset swipe state if not in swipe gesture
+        if hand_sign_id != THREE_FINGER_ID:
+            self.swipe_state = "idle"
+        
+        # Reset move controller when gesture ends
+        if hand_sign_id != TWO_FINGER_ID:
+            self.move_controller.reset()
 
     def dynamic_map_to_screen(self, cam_pos):
         cam_x, cam_y = cam_pos
