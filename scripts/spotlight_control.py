@@ -4,7 +4,7 @@ import pyautogui
 import time
 import subprocess
 import platform
-import re
+import sys
 
 class SpotlightController:
     def __init__(self):
@@ -15,47 +15,169 @@ class SpotlightController:
         self.last_update_time = 0
         self.update_cooldown = 1.0
         self.original_window_info = None
-        self.is_mac = platform.system() == 'Darwin'
+        self.os_type = platform.system()
+        
+        # Print OS information
+        os_info = {
+            'Darwin': 'macOS',
+            'Windows': 'Windows',
+            'Linux': 'Linux'
+        }.get(self.os_type, self.os_type)
+        print(f"🖥️ Operating System: {os_info}")
+        
+        # Platform-specific initialization
+        if self.os_type == 'Darwin':  # macOS
+            print("🔧 Using macOS window management")
+            self.get_window_info = self._get_mac_window_info
+            self.restore_window = self._restore_mac_window
+        elif self.os_type == 'Windows':
+            print("🔧 Using Windows window management")
+            self.get_window_info = self._get_win_window_info
+            self.restore_window = self._restore_win_window
+        else:  # Linux/other
+            print("🔧 Using Linux/other window management")
+            self.get_window_info = self._get_linux_window_info
+            self.restore_window = self._restore_linux_window
+
+    def _get_mac_window_info(self):
+        """Get active window info on macOS"""
+        try:
+            script = """
+            tell application "System Events"
+                set frontApp to first application process whose frontmost is true
+                set frontAppName to name of frontApp
+                try
+                    tell process frontAppName
+                        set windowName to name of first window
+                    end tell
+                    return frontAppName & "|||" & windowName
+                on error
+                    return frontAppName
+                end try
+            end tell
+            """
+            result = subprocess.run(['osascript', '-e', script], 
+                                  capture_output=True, text=True)
+            if result.returncode == 0:
+                output = result.stdout.strip()
+                if "|||" in output:
+                    return output.split("|||")
+                return (output, None)
+        except Exception as e:
+            print(f"Couldn't get macOS window info: {e}")
+        return (None, None)
+
+    def _get_win_window_info(self):
+        """Get active window info on Windows"""
+        try:
+            import win32gui
+            window = win32gui.GetForegroundWindow()
+            title = win32gui.GetWindowText(window)
+            exe_name = None
+            
+            # Try to get the executable name
+            try:
+                import psutil
+                pid = win32gui.GetWindowThreadProcessId(window)[1]
+                exe_name = psutil.Process(pid).name()
+            except:
+                pass
+                
+            return (exe_name or "unknown", title or "unknown")
+        except Exception as e:
+            print(f"Couldn't get Windows window info: {e}")
+        return (None, None)
+
+    def _get_linux_window_info(self):
+        """Get active window info on Linux"""
+        try:
+            # Try using xdotool if available
+            try:
+                id_result = subprocess.run(['xdotool', 'getactivewindow'], 
+                                        capture_output=True, text=True)
+                if id_result.returncode == 0:
+                    window_id = id_result.stdout.strip()
+                    name_result = subprocess.run(['xdotool', 'getwindowname', window_id],
+                                                capture_output=True, text=True)
+                    if name_result.returncode == 0:
+                        return ("unknown", name_result.stdout.strip())
+            except:
+                pass
+        except Exception as e:
+            print(f"Couldn't get Linux window info: {e}")
+        return (None, None)
+
+    def _restore_mac_window(self, app_name, window_name):
+        """Restore window on macOS"""
+        try:
+            if window_name:
+                script = f"""
+                tell application "{app_name}"
+                    activate
+                    try
+                        set targetWindow to window "{window_name}"
+                        set index of targetWindow to 1
+                    on error
+                        activate
+                    end try
+                end tell
+                """
+            else:
+                script = f'tell application "{app_name}" to activate'
+            
+            subprocess.run(['osascript', '-e', script])
+            return True
+        except Exception as e:
+            print(f"Couldn't restore macOS window: {e}")
+        return False
+
+    def _restore_win_window(self, app_name, window_title):
+        """Restore window on Windows"""
+        try:
+            import win32gui
+            import win32con
+            
+            def callback(hwnd, extra):
+                if window_title.lower() in win32gui.GetWindowText(hwnd).lower():
+                    extra.append(hwnd)
+                return True
+                
+            windows = []
+            win32gui.EnumWindows(callback, windows)
+            
+            if windows:
+                hwnd = windows[0]
+                win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
+                win32gui.SetForegroundWindow(hwnd)
+                return True
+        except Exception as e:
+            print(f"Couldn't restore Windows window: {e}")
+        return False
+
+    def _restore_linux_window(self, app_name, window_title):
+        """Restore window on Linux"""
+        try:
+            # Try using wmctrl if available
+            try:
+                subprocess.run(['wmctrl', '-a', window_title])
+                return True
+            except:
+                pass
+        except Exception as e:
+            print(f"Couldn't restore Linux window: {e}")
+        return False
 
     def take_screenshot(self):
         """Capture the current screen and store it"""
         try:
-            if self.is_mac:
-                # Get active window info using AppleScript
-                script = """
-                tell application "System Events"
-                    set frontApp to first application process whose frontmost is true
-                    set frontAppName to name of frontApp
-                    try
-                        tell process frontAppName
-                            set windowName to name of first window
-                        end tell
-                        return frontAppName & "|||" & windowName
-                    on error
-                        return frontAppName
-                    end try
-                end tell
-                """
-                result = subprocess.run(['osascript', '-e', script], 
-                                      capture_output=True, text=True)
-                if result.returncode == 0:
-                    output = result.stdout.strip()
-                    if "|||" in output:
-                        app_name, window_name = output.split("|||")
-                        self.original_window_info = (app_name, window_name)
-                        print(f"Original window: {app_name} - {window_name}")
-                    else:
-                        self.original_window_info = (output, None)
-                        print(f"Original app: {output} (no window name)")
-                else:
-                    print("Couldn't get active window info")
-                    self.original_window_info = None
+            self.original_window_info = self.get_window_info()
+            if self.original_window_info[0]:
+                print(f"Original window: {self.original_window_info[0]} - {self.original_window_info[1] or ''}")
             else:
-                # Windows/Linux implementation would go here
-                self.original_window_info = None
+                print("Couldn't get window info")
         except Exception as e:
             print(f"Couldn't get active window: {e}")
-            self.original_window_info = None
+            self.original_window_info = (None, None)
 
         screen = pyautogui.screenshot()
         screen_width, screen_height = pyautogui.size()
@@ -112,31 +234,13 @@ class SpotlightController:
             # Restore the original window after a small delay
             time.sleep(0.3)
             
-            if self.is_mac and self.original_window_info:
-                try:
-                    app_name, window_name = self.original_window_info
-                    if window_name:
-                        # Try to activate specific window
-                        script = f"""
-                        tell application "{app_name}"
-                            activate
-                            try
-                                set targetWindow to window "{window_name}"
-                                set index of targetWindow to 1
-                            on error
-                                -- If window not found, just activate app
-                                activate
-                            end try
-                        end tell
-                        """
-                    else:
-                        # Just activate the app if we don't have window name
-                        script = f'tell application "{app_name}" to activate'
-                    
-                    subprocess.run(['osascript', '-e', script])
+            if self.original_window_info and self.original_window_info[0]:
+                app_name, window_name = self.original_window_info
+                success = self.restore_window(app_name, window_name)
+                if success:
                     print(f"Restored focus to: {app_name}" + 
                          (f" - {window_name}" if window_name else ""))
-                except Exception as e:
-                    print(f"Couldn't restore window focus: {e}")
+                else:
+                    print("Failed to restore window focus")
             else:
-                print("No original window to restore or not on macOS")
+                print("No original window to restore")
