@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/415367de-3027-4fc5-a846-ae725f30837e)# Hand Gesture Controller for Presentations
+# Hand Gesture Controller for Presentations
 Control the Google Presentation slides with Hand Gesture
 
 # Installation
