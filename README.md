@@ -38,6 +38,8 @@ python3 app.py --device 0 --width 1280 --height 720 --min_detection_confidence 0
 - `--min_detection_confidence`: Detection threshold (default: `0.7`)
 - `--min_tracking_confidence`: Tracking threshold (default: `0.5`)
   
+### To exit the app
+- Press the **ESC** key while the camera window is open
 # Goal
 Control Google Slides via:
 
