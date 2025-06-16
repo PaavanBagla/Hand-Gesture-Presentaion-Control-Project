@@ -19,6 +19,7 @@ OR
 ```bash
 pip install mediapipe opencv-python pyautogui tensorflow
 ```
+Total Space needed for conda environment: 3.2 GB
 
 # Goal
 Control Google Slides via:
