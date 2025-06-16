@@ -237,7 +237,9 @@ def main():
     # Get the actual dimensions (camera may not honor the requested size exactly)
     actual_cam_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
     actual_cam_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
+    print("----")
     print("🎥 Camera dimensions (actual):", actual_cam_width, "x", actual_cam_height)
+    print("----")
 
 
     # Model load #############################################################

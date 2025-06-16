@@ -23,22 +23,26 @@ class SpotlightController:
             'Windows': 'Windows',
             'Linux': 'Linux'
         }.get(self.os_type, self.os_type)
+        print("----")
         print(f"🖥️ Operating System: {os_info}")
         
         # Platform-specific initialization
         if self.os_type == 'Darwin':  # macOS
             print("🔧 Using macOS window management")
+            print("----")
             self.get_window_info = self._get_mac_window_info
             self.restore_window = self._restore_mac_window
         elif self.os_type == 'Windows':
             print("🔧 Using Windows window management")
+            print("----")
             self.get_window_info = self._get_win_window_info
             self.restore_window = self._restore_win_window
         else:  # Linux/other
             print("🔧 Using Linux/other window management")
+            print("----")
             self.get_window_info = self._get_linux_window_info
             self.restore_window = self._restore_linux_window
-
+    
     def _get_mac_window_info(self):
         """Get active window info on macOS"""
         try:
