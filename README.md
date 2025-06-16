@@ -24,6 +24,7 @@ Total Space needed for conda environment: 3.2 GB
 # Usage
 Run the app with:
 ```bash
+cd Hand-Gesture-Presentaion-Control-Project
 python3 app.py
 ```
 You can also pass optional arguments to customize camera and detection settings:
