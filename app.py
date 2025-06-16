@@ -23,9 +23,9 @@ from scripts.move_control import MoveController # For move features
 #*************************************************************************************************************#
 # Constants
 THREE_FINGER_ID = 4  # Custom '3-finger' hand sign for swiping
-PINCH_IN_ID = 5 # Custom 'pinch in' hand sign for zooming in
-PINCH_OUT_ID = 6 # Custom 'pinch out' hand sign for zooming out
-TWO_FINGER_ID = 7 # Custom '2-finger' hand sign for moving
+PINCH_IN_ID = 10 # Custom 'pinch in' hand sign for zooming in
+PINCH_OUT_ID = 11 # Custom 'pinch out' hand sign for zooming out
+TWO_FINGER_ID = 10 # Custom '2-finger' hand sign for moving
 POINTING_ID = 2  # Custom 'pointer' hand sign for spotlight
 OK_HAND_ID = 3 # Custom 'Ok' hand sign for spotlight
 
@@ -196,7 +196,7 @@ def map_camera_to_screen(cam_x, cam_y, cam_width, cam_height):
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--device", type=int, default=1)
+    parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--width", help='cap width', type=int, default=960)
     parser.add_argument("--height", help='cap height', type=int, default=540)
 
