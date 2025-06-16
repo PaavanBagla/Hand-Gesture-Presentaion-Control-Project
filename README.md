@@ -26,6 +26,22 @@ Run the app with:
 ```bash
 python3 app.py
 ```
+You can also pass optional arguments to customize camera and detection settings:
+```bash
+python3 app.py --device 0 --width 1280 --height 720 --min_detection_confidence 0.8 --min_tracking_confidence 0.6
+```
+
+Available arguments:
+
+--device: Camera device ID (default: 1)
+
+--width / --height: Capture resolution (default: 960x540)
+
+--use_static_image_mode: Enable static image mode
+
+--min_detection_confidence: Detection threshold (default: 0.7)
+
+--min_tracking_confidence: Tracking threshold (default: 0.5)
 
 # Goal
 Control Google Slides via:
