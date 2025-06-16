@@ -1,4 +1,4 @@
-# Hand Gesture Controller for Presentations
+![image](https://github.com/user-attachments/assets/415367de-3027-4fc5-a846-ae725f30837e)# Hand Gesture Controller for Presentations
 Control the Google Presentation slides with Hand Gesture
 
 # Installation
@@ -7,7 +7,11 @@ Control the Google Presentation slides with Hand Gesture
 conda create -n hand_gesture_env python=3.9 -y
 conda activate hand_gesture_env
 ```
-**Step 2: Install Dependencies**
+**Step 2: Clone GithubRepo**
+```bash
+git clone https://github.com/PaavanBagla/Hand-Gesture-Presentaion-Control-Project.git
+```
+**Step 3: Install Dependencies**
 ```bash
 pip3 install mediapipe opencv-python pyautogui
 ```
@@ -15,9 +19,9 @@ pip3 install mediapipe opencv-python pyautogui
 # Goal
 Control Google Slides via:
 
-👉 3-fingers swipe right → Next Slide
+👉 3-fingers swipe left → Next Slide
 
-👈 3-fingers swipe left → Previous Slide
+👈 3-fingers swipe right → Previous Slide
 
 🫵 Index finger Point → Spotlight pointer
 
