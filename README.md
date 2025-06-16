@@ -13,7 +13,11 @@ git clone https://github.com/PaavanBagla/Hand-Gesture-Presentaion-Control-Projec
 ```
 **Step 3: Install Dependencies**
 ```bash
-pip3 install mediapipe opencv-python pyautogui
+pip3 install mediapipe opencv-python pyautogui tensorflow
+```
+OR
+```bash
+pip install mediapipe opencv-python pyautogui tensorflow
 ```
 
 # Goal
