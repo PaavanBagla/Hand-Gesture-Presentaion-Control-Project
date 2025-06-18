@@ -153,6 +153,10 @@ class SpotlightController:
                 hwnd = windows[0]
                 win32gui.ShowWindow(hwnd, win32con.SW_RESTORE)
                 win32gui.SetForegroundWindow(hwnd)
+
+                # Small delay to ensure window is focused
+                time.sleep(0.5)
+                
                 return True
         except Exception as e:
             print(f"Couldn't restore Windows window: {e}")
@@ -234,16 +238,23 @@ class SpotlightController:
             cv2.destroyWindow(self.overlay_window_name)
             self.enabled = False
             self.screenshot = None
-            
+
             # Restore the original window after a small delay
             time.sleep(0.3)
-            
+
             if self.original_window_info and self.original_window_info[0]:
                 app_name, window_name = self.original_window_info
                 success = self.restore_window(app_name, window_name)
                 if success:
                     print(f"Restored focus to: {app_name}" + 
-                         (f" - {window_name}" if window_name else ""))
+                        (f" - {window_name}" if window_name else ""))
+
+                    # Give some time for window to properly regain focus
+                    time.sleep(0.5)
+
+                    # # Optional: simulate click to help focus
+                    # screen_width, screen_height = pyautogui.size()
+                    # pyautogui.click(screen_width // 2, screen_height // 2)
                 else:
                     print("Failed to restore window focus")
             else:
