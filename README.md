@@ -28,7 +28,7 @@ pip install mediapipe opencv-python pyautogui tensorflow
 ```
 For Windows:
 ```bash
-pip install mediapipe opencv-python pyautogui tensorflow pywin32
+pip install mediapipe opencv-python pyautogui tensorflow pywin32 pywinauto
 ```
 Total Space needed for conda environment: 3.2 GB
 
