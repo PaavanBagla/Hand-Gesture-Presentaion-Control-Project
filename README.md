@@ -3,6 +3,11 @@ Control the Google Presentation slides with Hand Gesture
 
 # Installation
 **Step 1: Create and activate the conda environment**
+# Install conda
+```bash
+curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
+```
+
 ```bash
 conda create -n hand_gesture_env python=3.9 -y
 conda activate hand_gesture_env
