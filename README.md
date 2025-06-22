@@ -19,7 +19,7 @@ source ~/.zshrc
 - Add Miniconda to PATH: You can check this box, or let the installer manage it.
 - Finish installation.
 
-**Verify conda install**
+**Step 2: Verify conda install**
 
 **On Mac**
 Open terminal and run:
@@ -32,16 +32,16 @@ Start Menu → Command Prompt and run:
 conda --version
 ```
 
-**Step 2: Create and activate the conda environment**
+**Step 3: Create and activate the conda environment**
 ```bash
 conda create -n hand_gesture_env python=3.9 -y
 conda activate hand_gesture_env
 ```
-**Step 3: Clone GithubRepo**
+**Step 4: Clone GithubRepo**
 ```bash
 git clone https://github.com/PaavanBagla/Hand-Gesture-Presentaion-Control-Project.git
 ```
-**Step 4: Install Dependencies**
+**Step 5: Install Dependencies**
 ```bash
 pip install mediapipe opencv-python pyautogui tensorflow
 ```
