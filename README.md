@@ -3,6 +3,7 @@ Control the Google Presentation slides with Hand Gesture
 
 # Installation
 **Step 1: Install conda**
+
 **On Mac**
 ```bash
 curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
