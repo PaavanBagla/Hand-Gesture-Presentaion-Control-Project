@@ -10,7 +10,7 @@ bash Miniconda3-latest-MacOSX-arm64.sh
 source ~/.zshrc
 ```
 **On Windows**
-1. 
+1. Visit [Miniconda download page](https://www.anaconda.com/download/)
 ```bash
 curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
 bash Miniconda3-latest-MacOSX-arm64.sh
