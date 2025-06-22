@@ -5,6 +5,7 @@ import time
 import subprocess
 import platform
 import sys
+import ctypes
 
 class SpotlightController:
     def __init__(self):
@@ -156,6 +157,10 @@ class SpotlightController:
 
                 # Small delay to ensure window is focused
                 time.sleep(0.5)
+                
+                # # Simulate click to regain focus (especially for Google Slides)
+                # screen_width, screen_height = pyautogui.size()
+                # pyautogui.click(screen_width // 2, screen_height // 2)
                 
                 return True
         except Exception as e:
