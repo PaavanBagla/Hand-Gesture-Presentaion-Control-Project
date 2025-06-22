@@ -11,13 +11,23 @@ bash Miniconda3-latest-MacOSX-arm64.sh
 source ~/.zshrc
 ```
 **On Windows**
-1. Visit [Miniconda download page](https://www.anaconda.com/download/)
-```bash
-curl -O https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-arm64.sh
-bash Miniconda3-latest-MacOSX-arm64.sh
-source ~/.zshrc
-```
+1. Visit [Miniconda download page](https://www.anaconda.com/download/) and "Skip Registration"
+2. Downlaod Miniconda Installers for windows - Python 3.12 (64-Bit Graphical Installer)
+3. Run the installer:
+- Click Next through the installation wizard.
+- Choose “Just Me” or “All Users” as needed.
+- Add Miniconda to PATH: You can check this box, or let the installer manage it.
+- Finish installation.
+
 **Verify conda install**
+
+**On Mac**
+Open terminal and run:
+```bash
+conda --version
+```
+**On Windows**
+Start Menu → Command Prompt and run:
 ```bash
 conda --version
 ```
