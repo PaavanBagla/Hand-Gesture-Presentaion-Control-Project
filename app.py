@@ -21,9 +21,12 @@ from scripts.spotlight_control import SpotlightController # For Spotlight featur
 
 #*************************************************************************************************************#
 # Constants
-THREE_FINGER_ID = 4  # Custom '3-finger' hand sign for swiping
+OPEN_ID = 0  # Custom 'open' hand sign 
+CLOSE_ID = 1  # Custom 'close' hand sign
 POINTING_ID = 2  # Custom 'pointer' hand sign for spotlight
-OK_HAND_ID = 3 # Custom 'Ok' hand sign for spotlight
+OK_HAND_ID = 3 # Custom 'Ok' hand sign for spotlight deactivation
+THREE_FINGER_ID = 4  # Custom '3-finger' hand sign for swiping
+TWO_FINGER_ID = 5  # Custom '2-finger' hand sign for drawing
 
 class PresentationController:
     def __init__(self, cam_width, cam_height):
