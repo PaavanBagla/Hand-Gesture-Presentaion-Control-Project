@@ -16,16 +16,12 @@ from utils import CvFpsCalc
 from model import KeyPointClassifier
 from model import PointHistoryClassifier
 from scripts.swipe_control import detect_swipe # For Swipe features
-from scripts.zoom_control import ZoomController # For Zoom features
 from scripts.spotlight_control import SpotlightController # For Spotlight features
-from scripts.move_control import MoveController # For move features
+# from scripts.draw_control import DrawController # For Drawing features
 
 #*************************************************************************************************************#
 # Constants
 THREE_FINGER_ID = 4  # Custom '3-finger' hand sign for swiping
-PINCH_IN_ID = 10 # Custom 'pinch in' hand sign for zooming in
-PINCH_OUT_ID = 11 # Custom 'pinch out' hand sign for zooming out
-TWO_FINGER_ID = 10 # Custom '2-finger' hand sign for moving
 POINTING_ID = 2  # Custom 'pointer' hand sign for spotlight
 OK_HAND_ID = 3 # Custom 'Ok' hand sign for spotlight
 
@@ -34,9 +30,6 @@ class PresentationController:
         self.swipe_state = "idle"
         self.last_swipe_time = 0
         self.swipe_cooldown = 0.7 # seconds between allowed swipes
-        
-        self.zoom_controller = ZoomController()
-        self.move_controller = MoveController()
 
         self.spotlight_controller = SpotlightController()
         self.pointer_hold_counter = 0
@@ -68,18 +61,6 @@ class PresentationController:
                     self._execute_swipe_action(self.last_swipe_direction)
                     self.swipe_state = "idle"
                     self.last_swipe_time = current_time
-    
-        # Pointing Gesture (Spotlight)
-
-        # Pinch gestures (zoom)
-        if hand_sign_id == PINCH_OUT_ID:
-            self.zoom_controller.zoom("in")
-        elif hand_sign_id == PINCH_IN_ID:
-            self.zoom_controller.zoom("out")
-
-        # Two-finger drag for moving zoomed screen
-        if hand_sign_id == TWO_FINGER_ID:
-            self.move_controller.move_cursor(landmark_list[8])  # track index finger
         
         # Spotlight control logic
         if hand_sign_id == POINTING_ID:
@@ -138,10 +119,6 @@ class PresentationController:
         # Reset swipe state if not in swipe gesture
         if hand_sign_id != THREE_FINGER_ID:
             self.swipe_state = "idle"
-        
-        # Reset move controller when gesture ends
-        if hand_sign_id != TWO_FINGER_ID:
-            self.move_controller.reset()
 
     def dynamic_map_to_screen(self, cam_pos):
         cam_x, cam_y = cam_pos
@@ -333,7 +310,7 @@ def main():
                 hand_sign_id = keypoint_classifier(pre_processed_landmark_list)
                 
                 # Track index finger for swipe/move/spotlight gestures
-                if hand_sign_id in [THREE_FINGER_ID, TWO_FINGER_ID, POINTING_ID]:
+                if hand_sign_id in [THREE_FINGER_ID, POINTING_ID]:
                     point_history.append(landmark_list[8])
                 else:
                     point_history.append([0, 0])
